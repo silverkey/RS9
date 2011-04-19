@@ -5,6 +5,7 @@ package Biosub::Utils;
 use strict;
 use warnings;
 use Data::Dumper;
+use DBI;
 
 =head2 get_conf
 
@@ -158,6 +159,68 @@ sub strip_id {
   }
   return $acc if $acc;
   return $id;
+}
+
+=head2 connect_to_db
+
+ Title   : connect_to_db
+
+ Usage   : Biosub::Utils->connect_to_db($db,$usr,$pwd,$host);
+
+ Function: Connect to a mysql database
+
+ Returns : A mysql dbh
+
+ Args    : dbname, user, password, host
+
+ Note    :
+
+=cut
+
+sub connect_to_db {
+  my $class = shift;
+  my $db = shift;
+  my $usr = shift;
+  my $pwd = shift;
+  my $host = shift;
+  my $dsn = 'dbi:mysql:'.$db;
+  $dsn .= ':'.$host if $host; # IN THE CURRENT DBI POD VERSION THERE IS THE '@' IN THE PLACE OF ':'
+  my $dbh = DBI->connect($dsn,$usr,$pwd,{PrintWarn=>1,PrintError=>1,RaiseError=>1}) or die $DBI::errstr;
+  return $dbh;
+}
+
+=head2 combo
+
+ Title   : combo
+
+ Usage   : Biosub::Utils->combo(\@data);
+
+ Function: Take an array and calculate all the possible combinations of elements
+
+ Returns : An hashref with each key representing a combination with the elements separated by a space
+
+ Args    : An arrayref
+
+ Note    :
+
+=cut
+
+sub combo {
+  my $class = shift;
+  my $list = shift;
+  my (@print, $str, $i, $j);
+  my $href;
+  my $size = @{$list};
+  for ($i = 0; $i < 2**$size; $i++) {
+    $str = sprintf("%*.*b", $size, $size, $i);
+    @print = ();
+    for ($j = 0; $j < $size; $j++) {
+      if (substr($str, $j, 1)) { push (@print, $list->[$j]); }
+    }
+    my $string = join(' ',sort(@print));
+    $href->{$string} ++;
+  }
+  return $href;
 }
 
 1;
